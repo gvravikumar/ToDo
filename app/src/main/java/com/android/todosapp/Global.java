@@ -5,5 +5,7 @@ package com.android.todosapp;
  */
 
 public class Global {
-    public static int itemsCount = 0 ;
+    public static String itemsCount ;
+    public static int SAVE_ITEM_REQUEST_CODE = 100;
+    public static int DELETE_ITEM_REQUEST_CODE=101;
 }

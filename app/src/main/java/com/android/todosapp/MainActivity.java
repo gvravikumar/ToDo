@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     ListView categoryListView;
     ArrayList<CategoryModel> list;
     CategoryAdapter adapter;
+    DBHelper mDBHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,15 +41,26 @@ public class MainActivity extends AppCompatActivity {
 
         getSupportActionBar().setTitle(Html.fromHtml("<font color=\"black\">" + "Categories" + "</font>"));
 
-        final DBHelper mDBHelper = new DBHelper(getApplicationContext());
-
+        mDBHelper = new DBHelper(getApplicationContext());
         SQLiteDatabase db = mDBHelper.getReadableDatabase();
         list = new ArrayList<>();
         categoryListView = (ListView) findViewById(R.id.category_list);
+
+        Cursor c1 = db.rawQuery("select " + DBContract.FeedEntry.COLUMN_NAME_CATEGORY + ", Count(*) as cnt " +
+                "from " + DBContract.FeedEntry.TABLE_NAME + " group by " + DBContract.FeedEntry.COLUMN_NAME_CATEGORY, null);
+
+        while (c1.moveToNext()) {
+            Global.itemsCount = c1.getString(c1.getColumnIndex("cnt"));
+            list.add(new CategoryModel(c1.getString(c1.getColumnIndex(DBContract.FeedEntry.COLUMN_NAME_CATEGORY)), Global.itemsCount, null, null, null));
+            adapter = new CategoryAdapter(MainActivity.this, list);
+            adapter.notifyDataSetChanged();
+            categoryListView.setAdapter(adapter);
+        }
+
         categoryListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                startActivity(new Intent(MainActivity.this, ItemsActivity.class).putExtra("categoryFromMain", list.get(position).get_category()));
+                startActivityForResult(new Intent(MainActivity.this, ItemsActivity.class).putExtra("categoryFromMain", list.get(position).get_category()),1);
             }
         });
         categoryListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
@@ -67,16 +79,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Cursor c = db.rawQuery("select Distinct " + DBContract.FeedEntry.COLUMN_NAME_CATEGORY + " from " + DBContract.FeedEntry.TABLE_NAME, null);
-        Cursor c1 = db.rawQuery("select " + DBContract.FeedEntry.COLUMN_NAME_CATEGORY + ", Count(" + DBContract.FeedEntry.COLUMN_NAME_CATEGORY + ") from " + DBContract.FeedEntry.TABLE_NAME + " group by " + DBContract.FeedEntry.COLUMN_NAME_CATEGORY + " having count(" + DBContract.FeedEntry.COLUMN_NAME_CATEGORY + ") > 1", null);
-
-        while (c.moveToNext() && c1.moveToNext()) {
-            Global.itemsCount = c1.getInt(c1.getColumnIndex("Count(*)")) - 1;
-            list.add(new CategoryModel(c.getString(c.getColumnIndex(DBContract.FeedEntry.COLUMN_NAME_CATEGORY)), null, null, null, null));
-            adapter = new CategoryAdapter(MainActivity.this, list);
-            adapter.notifyDataSetChanged();
-            categoryListView.setAdapter(adapter);
-        }
 
         addCategory = (FloatingActionButton) findViewById(R.id.addCategory);
         addCategory.setOnClickListener(new View.OnClickListener() {
@@ -102,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
 
-                        String temp = category_edit_text.getText().toString();
+                        String temp = category_edit_text.getText().toString().trim();
                         boolean alreadyExists = false;
                         for (CategoryModel a : list) {
                             if (temp.compareTo(a.get_category()) == 0) {
@@ -110,25 +112,50 @@ public class MainActivity extends AppCompatActivity {
                                 error1.setVisibility(View.VISIBLE);
                             }
                         }
-                        if (temp.trim().length() > 0 && !alreadyExists) {
+                        if (temp.length() > 0 && !alreadyExists) {
                             SQLiteDatabase db = mDBHelper.getWritableDatabase();
                             ContentValues values = new ContentValues();
                             values.put(DBContract.FeedEntry.COLUMN_NAME_CATEGORY, temp);
                             long checked = db.insert(DBContract.FeedEntry.TABLE_NAME, null, values);
                             Log.v("inserted?", String.valueOf(checked));
                             db.close();
-                            list.add(new CategoryModel(temp, null, null, null, null));
-                            adapter = new CategoryAdapter(MainActivity.this, list);
-                            adapter.notifyDataSetChanged();
-                            categoryListView.setAdapter(adapter);
+                            if (checked > 0) {
+                                Toast.makeText(MainActivity.this, "added", Toast.LENGTH_SHORT).show();
+                                list.add(new CategoryModel(temp, null, null, null, null));
+                                adapter = new CategoryAdapter(MainActivity.this, list);
+                                adapter.notifyDataSetChanged();
+                                categoryListView.setAdapter(adapter);
+                            }
                             tempDialog.dismiss();
                         } else if (temp.trim().length() <= 0) {
                             Toast.makeText(MainActivity.this, "Please add Category or press cancel", Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
+
                 tempDialog.show();
             }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        UpdateUI();
+    }
+
+    private void UpdateUI() {
+        list.clear();
+        SQLiteDatabase db = mDBHelper.getReadableDatabase();
+        Cursor c1 = db.rawQuery("select " + DBContract.FeedEntry.COLUMN_NAME_CATEGORY + ", Count(*) as cnt " +
+                "from " + DBContract.FeedEntry.TABLE_NAME + " group by " + DBContract.FeedEntry.COLUMN_NAME_CATEGORY, null);
+
+        while (c1.moveToNext()) {
+            Global.itemsCount = c1.getString(c1.getColumnIndex("cnt"));
+            list.add(new CategoryModel(c1.getString(c1.getColumnIndex(DBContract.FeedEntry.COLUMN_NAME_CATEGORY)), Global.itemsCount, null, null, null));
+            adapter = new CategoryAdapter(MainActivity.this, list);
+            adapter.notifyDataSetChanged();
+            categoryListView.setAdapter(adapter);
+        }
     }
 }

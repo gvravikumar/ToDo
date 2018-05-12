@@ -32,17 +32,19 @@ public class EditItemsActivity extends AppCompatActivity {
     Button changePhoto;
     EditText title, description;
     Switch status;
-    String header = "", imgStr, changedImage, updateTitle, updateDescription;
+    String header = "", changedImage, updateTitle, updateDescription;
+    byte[] imgStr;
     Boolean updateStatus;
-    Bitmap byteBmp;
+    Bitmap byteBmp,selectedImage;
     int CHANGE_IMAGE_REQUEST_CODE = 4;
     byte[] imageBytes;
-    DBHelper db = new DBHelper(EditItemsActivity.this);
+    DBHelper mDBHelper ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_items);
+        mDBHelper = new DBHelper(getApplicationContext());
 
         header = getIntent().getStringExtra("categoryFromItems");
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close_black_24dp);
@@ -54,15 +56,16 @@ public class EditItemsActivity extends AppCompatActivity {
         description = (EditText) findViewById(R.id.edit_description);
         status = (Switch) findViewById(R.id.edit_status);
 
-        SQLiteDatabase sqLiteDatabase = db.getReadableDatabase();
+        SQLiteDatabase sqLiteDatabase = mDBHelper.getReadableDatabase();
         Cursor c = sqLiteDatabase.rawQuery("select * from " + DBContract.FeedEntry.TABLE_NAME + " where " + DBContract.FeedEntry.COLUMN_NAME_TITLE + " =? ", new String[]{header}, null);
 
         if (c.moveToNext()) {
             do {
-                imgStr = c.getString(c.getColumnIndex(DBContract.FeedEntry.COLUMN_NAME_IMAGE));
+                imgStr = c.getBlob(c.getColumnIndex(DBContract.FeedEntry.COLUMN_NAME_IMAGE));
                 if (imgStr != null) {
-                    byte[] strbyte = Base64.decode(imgStr, Base64.DEFAULT);
-                    byteBmp = BitmapFactory.decodeByteArray(strbyte, 0, strbyte.length);
+                    //byte[] strbyte = Base64.decode(imgStr, Base64.DEFAULT);
+                    byteBmp = BitmapFactory.decodeByteArray(imgStr, 0, imgStr.length);
+                    selectedImage = byteBmp;
                     img.setImageBitmap(byteBmp);
                 }
                 title.setText(c.getString(c.getColumnIndex(DBContract.FeedEntry.COLUMN_NAME_TITLE)));
@@ -89,14 +92,9 @@ public class EditItemsActivity extends AppCompatActivity {
             try {
                 final Uri imageUri = data.getData();
                 final InputStream imageStream = getContentResolver().openInputStream(imageUri);
-                final Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
+                selectedImage = BitmapFactory.decodeStream(imageStream);
+                selectedImage = selectedImage.createScaledBitmap(selectedImage,160,160,true);
                 img.setImageBitmap(selectedImage);
-
-                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                selectedImage.compress(Bitmap.CompressFormat.PNG, 0, stream);
-                imageBytes = stream.toByteArray();
-                changedImage = Base64.encodeToString(imageBytes, Base64.DEFAULT).replaceAll("[\n\r]", "");
-
             } catch (FileNotFoundException fnf) {
                 fnf.printStackTrace();
             }
@@ -120,34 +118,45 @@ public class EditItemsActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        SQLiteDatabase db = mDBHelper.getWritableDatabase();
         switch (item.getItemId()) {
             case R.id.save:
+                if(selectedImage!= null){
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                    selectedImage.compress(Bitmap.CompressFormat.PNG, 90, stream);
+                    imageBytes = stream.toByteArray();
+                }
+
                 updateTitle = title.getText().toString();
                 updateDescription = description.getText().toString();
                 updateStatus = status.isChecked();
-                SQLiteDatabase dbSave = db.getWritableDatabase();
 
                 ContentValues cv = new ContentValues();
-                cv.put(DBContract.FeedEntry.COLUMN_NAME_CATEGORY, getIntent().getStringExtra("categoryFromItems"));
                 cv.put(DBContract.FeedEntry.COLUMN_NAME_TITLE, updateTitle);
-                cv.put(DBContract.FeedEntry.COLUMN_NAME_IMAGE, changedImage);
+                cv.put(DBContract.FeedEntry.COLUMN_NAME_IMAGE, imageBytes);
                 cv.put(DBContract.FeedEntry.COLUMN_NAME_DESCRIPTION, updateDescription);
                 if (!updateStatus) {
                     cv.put(DBContract.FeedEntry.COLUMN_NAME_STATUS, 1);
                 } else {
                     cv.put(DBContract.FeedEntry.COLUMN_NAME_STATUS, 0);
                 }
-                long saveResult = dbSave.update(DBContract.FeedEntry.TABLE_NAME, cv, DBContract.FeedEntry.COLUMN_NAME_TITLE + " =? ", new String[]{updateTitle});
-                if (saveResult != -1)
-                    Toast.makeText(this, "Saved Successfully", Toast.LENGTH_SHORT).show();
+                long saveResult = db.update(DBContract.FeedEntry.TABLE_NAME, cv, DBContract.FeedEntry.COLUMN_NAME_TITLE + " =? ", new String[]{updateTitle});
+                if (saveResult != -1){
+                    setResult(1);
+                    Toast.makeText(this, "Updated Successfully", Toast.LENGTH_SHORT).show();
+                }
+                db.close();
                 finish();
                 return true;
             case R.id.delete:
-                SQLiteDatabase dbDelete = db.getWritableDatabase();
-
-                long deleteResult = dbDelete.delete(DBContract.FeedEntry.TABLE_NAME, DBContract.FeedEntry.COLUMN_NAME_TITLE + " =?", new String[]{updateTitle});
-                if (deleteResult != -1)
-                    Toast.makeText(this, "Delete Successfully", Toast.LENGTH_SHORT).show();
+                long deleteResult = db.delete(DBContract.FeedEntry.TABLE_NAME,
+                        DBContract.FeedEntry.COLUMN_NAME_TITLE + " = ?",
+                        new String[]{header});
+                if (deleteResult != -1){
+                    Toast.makeText(this, "Deleted Successfully", Toast.LENGTH_SHORT).show();
+                    setResult(1,new Intent());
+                }
+                db.close();
                 finish();
                 return true;
             default:

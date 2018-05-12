@@ -25,17 +25,13 @@ import java.util.List;
 public class ItemsActivity extends AppCompatActivity {
 
     FloatingActionButton addItem;
-    String item = "",img;
+    String item = "";
+    byte[] img;
     ListView listView;
     ArrayList<CategoryModel> list;
     ItemAdapter adapter;
-    Bitmap byteBmp;
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        updateUI();
-    }
+    Bitmap byteBmp = null;
+    DBHelper mDBHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,13 +39,57 @@ public class ItemsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_items);
         list = new ArrayList<>();
         listView = (ListView) findViewById(R.id.items_list);
+        mDBHelper = new DBHelper(getApplicationContext());
 
         item = getIntent().getStringExtra("categoryFromMain");
+
+        SQLiteDatabase db = mDBHelper.getReadableDatabase();
+
+        Cursor c = db.rawQuery("select * from " + DBContract.FeedEntry.TABLE_NAME + " where " + DBContract.FeedEntry.COLUMN_NAME_CATEGORY + " =? ", new String[]{item}, null);
+
+        while (c.moveToNext()) {
+            int titleID = c.getColumnIndex(DBContract.FeedEntry.COLUMN_NAME_TITLE);
+            int descriptionID = c.getColumnIndex(DBContract.FeedEntry.COLUMN_NAME_DESCRIPTION);
+            int imageID = c.getColumnIndex(DBContract.FeedEntry.COLUMN_NAME_IMAGE);
+            int statusID = c.getColumnIndex(DBContract.FeedEntry.COLUMN_NAME_STATUS);
+
+            img = c.getBlob(imageID);
+
+            if (img != null) {
+                //byte[] strbyte = Base64.decode(img, Base64.DEFAULT);
+                byteBmp = BitmapFactory.decodeByteArray(img, 0, img.length);
+            }
+
+            if (c.getString(titleID) != null || c.getString(imageID) != null || c.getString(statusID) != null) {
+                if(!list.contains(c.getString(titleID))){
+                    list.add(new CategoryModel(null, c.getString(titleID), c.getString(descriptionID), byteBmp, c.getString(statusID)));
+                    adapter = new ItemAdapter(ItemsActivity.this, list);
+                    adapter.notifyDataSetChanged();
+                    listView.setAdapter(adapter);
+                }
+            }
+        }
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                startActivity(new Intent(ItemsActivity.this,EditItemsActivity.class).putExtra("categoryFromItems",list.get(position).get_category_title()));
+                startActivityForResult(new Intent(ItemsActivity.this, EditItemsActivity.class).putExtra("categoryFromItems", list.get(position).get_category_title()),1);
+            }
+        });
+
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+
+                adapter.notifyDataSetChanged();
+                SQLiteDatabase db = mDBHelper.getWritableDatabase();
+
+                db.delete(DBContract.FeedEntry.TABLE_NAME,
+                        DBContract.FeedEntry.COLUMN_NAME_TITLE + " = ?",
+                        new String[]{list.get(position).get_category_title()});
+                db.close();
+                list.remove(position);
+                return true;
             }
         });
 
@@ -60,39 +100,48 @@ public class ItemsActivity extends AppCompatActivity {
         addItem.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(ItemsActivity.this, AddItemActivity.class).putExtra("categoryFromItems", item));
+                startActivityForResult(new Intent(ItemsActivity.this, AddItemActivity.class).putExtra("categoryFromItems", item), Global.SAVE_ITEM_REQUEST_CODE);
             }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
         updateUI();
     }
-    public void updateUI(){
-        DBHelper mDBHelper = new DBHelper(getApplicationContext());
 
+    public void updateUI() {
         SQLiteDatabase db = mDBHelper.getReadableDatabase();
 
         Cursor c = db.rawQuery("select * from " + DBContract.FeedEntry.TABLE_NAME + " where " + DBContract.FeedEntry.COLUMN_NAME_CATEGORY + " =? ", new String[]{item}, null);
 
-        if (c.moveToNext()) {
-            do {
-                int categoryID = c.getColumnIndex(DBContract.FeedEntry.COLUMN_NAME_CATEGORY);
-                int titleID = c.getColumnIndex(DBContract.FeedEntry.COLUMN_NAME_TITLE);
-                int descriptionID = c.getColumnIndex(DBContract.FeedEntry.COLUMN_NAME_DESCRIPTION);
-                int imageID = c.getColumnIndex(DBContract.FeedEntry.COLUMN_NAME_IMAGE);
-                int statusID = c.getColumnIndex(DBContract.FeedEntry.COLUMN_NAME_STATUS);
+        while (c.moveToNext()) {
+            int titleID = c.getColumnIndex(DBContract.FeedEntry.COLUMN_NAME_TITLE);
+            int descriptionID = c.getColumnIndex(DBContract.FeedEntry.COLUMN_NAME_DESCRIPTION);
+            int imageID = c.getColumnIndex(DBContract.FeedEntry.COLUMN_NAME_IMAGE);
+            int statusID = c.getColumnIndex(DBContract.FeedEntry.COLUMN_NAME_STATUS);
 
-                img = c.getString(imageID);
-                if(img!=null){
-                    byte[] strbyte  = Base64.decode(img, Base64.DEFAULT);
-                    byteBmp = BitmapFactory.decodeByteArray(strbyte,0,strbyte.length);
-                }
+            img = c.getBlob(imageID);
+            if (img != null) {
+                byteBmp = BitmapFactory.decodeByteArray(img, 0, img.length);
+            }else{
+                byteBmp = null;
+            }
 
-                if (c.getString(titleID) != null || c.getString(imageID) != null || c.getString(statusID) != null) {
-                    list.add(new CategoryModel(c.getString(categoryID), c.getString(titleID), c.getString(descriptionID), byteBmp, c.getString(statusID)));
+            if (c.getString(titleID) != null || c.getString(imageID) != null || c.getString(statusID) != null) {
+                if(!list.contains(c.getString(titleID))){
+                    list.add(new CategoryModel(null, c.getString(titleID), c.getString(descriptionID), byteBmp, c.getString(statusID)));
                     adapter = new ItemAdapter(ItemsActivity.this, list);
                     adapter.notifyDataSetChanged();
                     listView.setAdapter(adapter);
                 }
-            } while (c.moveToNext());
+            }else{
+                list.clear();
+                adapter = new ItemAdapter(ItemsActivity.this, list);
+                adapter.notifyDataSetChanged();
+                listView.setAdapter(adapter);
+            }
         }
     }
 }
