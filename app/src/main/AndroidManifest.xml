@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.todosapp">
+    package="com.build.todosapp">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_logo"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="com.android.todosapp.MainActivity"
-            android:label="Categories">
+            android:name="com.todosapp.MainActivity"
+            android:label="TO DO">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -19,13 +19,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.android.todosapp.ItemsActivity"
-            android:parentActivityName="com.android.todosapp.MainActivity" />
+            android:name="com.todosapp.ItemsActivity"
+            android:parentActivityName="com.todosapp.MainActivity" />
         <activity
-            android:name="com.android.todosapp.AddItemActivity"
-            android:parentActivityName="com.android.todosapp.ItemsActivity" />
-        <activity android:name="com.android.todosapp.EditItemsActivity"
-            android:parentActivityName="com.android.todosapp.ItemsActivity"></activity>
+            android:name="com.todosapp.AddItemActivity"
+            android:parentActivityName="com.todosapp.ItemsActivity" />
+        <activity android:name="com.todosapp.EditItemsActivity"
+            android:parentActivityName="com.todosapp.ItemsActivity"></activity>
     </application>
 
 </manifest>
