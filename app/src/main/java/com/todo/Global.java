@@ -1,4 +1,4 @@
-package com.todosapp;
+package com.todo;
 
 /**
  * Created by G V RAVI KUMAR on 3/13/2018.

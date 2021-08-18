@@ -1,4 +1,4 @@
-package com.todosapp;
+package com.todo;
 
 import android.content.Intent;
 import android.database.Cursor;
@@ -19,12 +19,12 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import android.text.Html;
 import android.view.View;
 
-import com.build.todosapp.R;
+import com.todo.R;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ItemsActivity extends AppCompatActivity implements com.todosapp.RecyclerItemTouchHelper.RecyclerItemTouchHelperListener {
+public class ItemsActivity extends AppCompatActivity implements com.todo.RecyclerItemTouchHelper.RecyclerItemTouchHelperListener {
 
     FloatingActionButton addItem;
     String item = "";

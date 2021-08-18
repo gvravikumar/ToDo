@@ -1,4 +1,4 @@
-package com.todosapp;
+package com.todo;
 
 import android.content.Context;
 import androidx.recyclerview.widget.RecyclerView;
@@ -10,7 +10,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.build.todosapp.R;
+import com.todo.R;
 
 import java.util.ArrayList;
 import java.util.List;

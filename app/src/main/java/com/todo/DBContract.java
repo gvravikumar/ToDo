@@ -1,4 +1,4 @@
-package com.todosapp;
+package com.todo;
 
 import android.provider.BaseColumns;
 

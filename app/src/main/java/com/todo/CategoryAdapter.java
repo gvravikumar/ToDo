@@ -1,4 +1,4 @@
-package com.todosapp;
+package com.todo;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -8,7 +8,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.build.todosapp.R;
+import com.todo.R;
 
 import java.util.ArrayList;
 

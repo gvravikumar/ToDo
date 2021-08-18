@@ -1,4 +1,4 @@
-package com.todosapp;
+package com.todo;
 
 import android.content.ContentValues;
 import android.content.Intent;
@@ -19,7 +19,7 @@ import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.Toast;
 
-import com.build.todosapp.R;
+import com.todo.R;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;

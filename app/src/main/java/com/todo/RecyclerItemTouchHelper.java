@@ -1,4 +1,4 @@
-package com.todosapp;
+package com.todo;
 
 import android.graphics.Canvas;
 import androidx.recyclerview.widget.RecyclerView;

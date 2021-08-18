@@ -1,4 +1,4 @@
-package com.todosapp;
+package com.todo;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.todo.R;
+
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
@@ -21,7 +23,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.build.todosapp.R;
 
 import java.util.ArrayList;
 

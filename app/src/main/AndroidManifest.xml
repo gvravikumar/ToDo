@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.build.todosapp">
+    package="com.todo">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <application
@@ -10,7 +10,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="com.todosapp.MainActivity"
+            android:name="com.todo.MainActivity"
             android:label="TO DO">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -19,13 +19,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.todosapp.ItemsActivity"
-            android:parentActivityName="com.todosapp.MainActivity" />
+            android:name="com.todo.ItemsActivity"
+            android:parentActivityName="com.todo.MainActivity" />
         <activity
-            android:name="com.todosapp.AddItemActivity"
-            android:parentActivityName="com.todosapp.ItemsActivity" />
-        <activity android:name="com.todosapp.EditItemsActivity"
-            android:parentActivityName="com.todosapp.ItemsActivity"></activity>
+            android:name="com.todo.AddItemActivity"
+            android:parentActivityName="com.todo.ItemsActivity" />
+        <activity android:name="com.todo.EditItemsActivity"
+            android:parentActivityName="com.todo.ItemsActivity" />
     </application>
 
 </manifest>
